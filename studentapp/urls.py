@@ -5,6 +5,7 @@ urlpatterns = [
     path("", views.getStudents),
     path("add/", views.addStudent),
     path("<int:st_id>", views.getStudentBy_st_id),
+    
 ]
 
 

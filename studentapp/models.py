@@ -5,13 +5,13 @@ from django.db import models
 
 class StudentModel(models.Model):
     # student name
-    # student st_id
+    # student st_id (unique)
     # student level
     # student program
     # student program type
 
     name = models.CharField(max_length=200)
-    st_id = models.CharField(max_length=8)
+    st_id = models.CharField(max_length=8, unique=True)
 
     level = models.IntegerField(
         choices=[
