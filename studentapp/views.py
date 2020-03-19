@@ -1,9 +1,11 @@
-from django.shortcuts import render
 from .models import StudentModel
 from .serializers import StudentModelSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.status import HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.status import (
+    HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST,
+    HTTP_201_CREATED, HTTP_200_OK
+)
 
 
 # Create your views here.
@@ -22,18 +24,25 @@ def getStudents(request):
 
 @api_view(['GET'])
 def getStudentBy_st_id(request, st_id):
+    result = {}
+    result_status = HTTP_400_BAD_REQUEST
+
     try:
-        students = StudentModel.objects.filter(st_id=st_id)
+        student = StudentModel.objects.get(st_id=st_id)
     except StudentModel.DoesNotExist:
-        return Response(status=HTTP_404_NOT_FOUND)
+        result['success'] = False
+        result['message'] = "Student ID is unknown"
+        return Response(
+            data=result, status=result_status
+        )
 
     if request.method == "GET":
-        serialized_students = StudentModelSerializer(students, many=True)
-        result = {}
+        serialized_student = StudentModelSerializer(student)
         result['success'] = True
-        result['body'] = serialized_students.data
+        result['body'] = serialized_student.data
+        result_status = HTTP_200_OK
 
-        return Response(data=result)
+        return Response(data=result, status=result_status)
 
 
 @api_view(['POST'])
@@ -41,12 +50,45 @@ def addStudent(request):
     if request.method == "POST":
         student_serializer = StudentModelSerializer(data=request.data)
 
+        result = {}
+        result_status = HTTP_400_BAD_REQUEST
+
         if student_serializer.is_valid():
             student_serializer.save()
-            result = {}
-            result['success'] = True
-            result['message'] = f"{student_serializer.data['name']} add successfully"
-            return Response(data=result, status=HTTP_201_CREATED)
-        return Response(student_serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-    # delete
+            result['success'] = True
+            result['message'] = f"{student_serializer.data['name']} added successfully"
+            result_status = HTTP_201_CREATED
+
+        else:
+            result['success'] = False
+            result['message'] = student_serializer.errors["st_id"][0]
+
+        return Response(data=result, status=result_status)
+
+
+@api_view(["DELETE"])
+def deleteStudent(request, st_id):
+
+    if request.method == "DELETE":
+        result = {}
+        result_status = HTTP_400_BAD_REQUEST
+
+        try:
+            student = StudentModel.objects.get(st_id=st_id)
+
+            if student.delete():
+                result['success'] = True
+                result['message'] = "student deleted successfully"
+                result_status = HTTP_200_OK
+            else:
+                result['success'] = False
+                result['message'] = "Student was not deleted"
+                result_status = HTTP_400_BAD_REQUEST
+
+        except StudentModel.DoesNotExist:
+            result['success'] = False
+            result['message'] = "Student ID is unknown"
+            result_status = HTTP_404_NOT_FOUND
+
+        return Response(data=result, status=result_status)
