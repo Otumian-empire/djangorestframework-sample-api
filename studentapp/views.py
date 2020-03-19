@@ -1,14 +1,13 @@
-from .models import StudentModel
-from .serializers import StudentModelSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST,
-    HTTP_201_CREATED, HTTP_200_OK
-)
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+                                   HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
+                                   HTTP_404_NOT_FOUND)
+
+from .models import StudentModel
+from .serializers import StudentModelSerializer
 
 
-# Create your views here.
 @api_view(['GET'])
 def getStudents(request):
     try:
@@ -84,6 +83,43 @@ def deleteStudent(request, st_id):
             else:
                 result['success'] = False
                 result['message'] = "Student was not deleted"
+                result_status = HTTP_400_BAD_REQUEST
+
+        except StudentModel.DoesNotExist:
+            result['success'] = False
+            result['message'] = "Student ID is unknown"
+            result_status = HTTP_404_NOT_FOUND
+
+        return Response(data=result, status=result_status)
+
+
+@api_view(['PUT'])
+def updateStudent(request, st_id):
+    if request.method == "PUT":
+        result = {}
+        result_status = HTTP_400_BAD_REQUEST
+
+        try:
+            student = StudentModel.objects.get(st_id=st_id)
+
+            if student:
+                studentSerializer = StudentModelSerializer(
+                    student, request.data)
+
+                if studentSerializer.is_valid():
+                    student.save()
+                    result['success'] = True
+                    result['message'] = "student updated successfully"
+                    result_status = HTTP_200_OK
+
+                else:
+                    result['success'] = False
+                    result['message'] = StudentModelSerializer.errors
+                    result_status = HTTP_400_BAD_REQUEST
+
+            else:
+                result['success'] = False
+                result['message'] = "empty result set"
                 result_status = HTTP_400_BAD_REQUEST
 
         except StudentModel.DoesNotExist:
