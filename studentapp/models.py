@@ -4,16 +4,15 @@ from django.db import models
 
 
 class StudentModel(models.Model):
-    """ 
-    student name
-    student st_id
-    student level
-    student program
-    student program type
-     """
+    # student name
+    # student st_id
+    # student level
+    # student program
+    # student program type
+
     name = models.CharField(max_length=200)
     st_id = models.CharField(max_length=8)
-    
+
     level = models.IntegerField(
         choices=[
             (100, "FR"), (200, "SO"), (300, "JR"), (400, "SR")
